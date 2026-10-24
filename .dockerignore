@@ -1,0 +1,11 @@
+.venv
+.git
+.github
+runs
+data
+tests
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+*.ipynb

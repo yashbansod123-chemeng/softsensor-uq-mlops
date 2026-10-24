@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  TORCH_VERSION: "2.5.1"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install torch==${TORCH_VERSION} --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Unit + pipeline tests
+        run: pytest -q
+      - name: Shell lint
+        run: shellcheck scripts/*.sh
+
+  train-and-publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t softsensor:${{ github.sha }} .
+
+      - name: Train + quality gate (in container)
+        run: |
+          mkdir -p runs && chmod 777 runs
+          docker run --rm -e GIT_SHA=${GITHUB_SHA::7} \
+            -v "$PWD/runs:/app/runs" softsensor:${{ github.sha }} -d ccpp -e 200
+
+      - name: Upload model + metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-${{ github.sha }}
+          path: runs/
+
+      - name: Job summary
+        if: always()
+        run: |
+          f=$(find runs -name metrics.json | head -n1)
+          [ -n "$f" ] || exit 0
+          python3 - "$f" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          r = json.load(open(sys.argv[1]))
+          t, g = r["metrics"]["test"], r["gate"]
+          print(f"### {'✅ Gate passed' if g['passed'] else '❌ Gate failed'} ({r['architecture']}, {r['dataset']})")
+          print("| metric | test |\n|---|---|")
+          for k in ("rmse", "mae", "picp", "pinaw", "nll"):
+              print(f"| {k} | {', '.join(f'{v:.4f}' for v in t[k])} |")
+          for msg in g["failures"]:
+              print(f"- {msg}")
+          PY
+
+      - name: Publish image to GHCR
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          IMG="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker tag softsensor:${{ github.sha }} "$IMG:${{ github.sha }}"
+          docker tag softsensor:${{ github.sha }} "$IMG:latest"
+          docker push "$IMG:${{ github.sha }}"
+          docker push "$IMG:latest"

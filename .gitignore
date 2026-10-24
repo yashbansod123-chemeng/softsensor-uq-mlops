@@ -1,0 +1,21 @@
+# Data and run outputs
+data/
+runs/
+*.csv
+*.xlsx
+*.h5
+*.pt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Keep PyCharm’s settings out of the repo
+.idea/

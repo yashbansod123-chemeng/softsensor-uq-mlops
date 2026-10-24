@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "softsensor"
+version = "0.1.0"
+description = "Mean-variance estimation (MVEM) soft sensor with uncertainty quantification"
+readme = "README.md"
+requires-python = ">=3.10"
+# torch is installed separately (CPU wheel) in the Dockerfile and CI to keep images small
+dependencies = ["numpy", "pandas", "ucimlrepo"]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[project.scripts]
+softsensor-train = "softsensor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
