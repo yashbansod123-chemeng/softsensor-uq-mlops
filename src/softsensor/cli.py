@@ -87,7 +87,7 @@ def run(args) -> int:
     for name in ("train", "val", "test"):
         mean_s, var_s = predict(model, data[f"x_{name}"])
         metrics[name] = uq_metrics(y_np[getattr(s, name)], y_scaler.inverse(mean_s),
-                                   np.sqrt(y_scaler.inverse_variance(var_s)), args.confidence)
+                                   np.sqrt(var_s), args.confidence)
 
     gate = Gate(args.max_rmse, args.picp_min, args.picp_max)
     failures = gate.check(metrics["test"])
