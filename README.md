@@ -78,9 +78,21 @@ Exit codes: `0` passed, `2` rejected by the gate, `1` error.
 
 ## Results
 
-| arch | test RMSE (MW) | PICP (95%) | PINAW |
-|---|---|---|---|
-| _fill in from the first CI run_ | | | |
+UCI CCPP, held-out test split (1,435 rows), seed 0:
+
+| arch | test RMSE (MW) | MAE (MW) | PICP (95%) | PINAW |
+|---|---|---|---|---|
+| `mean_and_hidden` | 3.81 | 2.95 | 0.955 | 0.209 |
+
+The mean predicted σ (about 3.9 MW) matches the observed RMSE, so the model's stated uncertainty agrees
+with its actual error. Results are identical on a Windows laptop and in the Linux CI container.
+
+### The gate in action
+
+[PR #1](https://github.com/yashbansod123-chemeng/softsensor-uq-mlops/pull/1) deliberately removes the
+conversion of predicted variance back to engineering units. Unit tests pass and RMSE is unchanged, but
+the 95% intervals become about 17× too narrow, PICP collapses, and the gate blocks the merge. An
+accuracy-only gate would have published this model.
 
 ## Layout
 
