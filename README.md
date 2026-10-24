@@ -1,6 +1,6 @@
 # softsensor-uq-mlops
 
-![ci](https://github.com/<you>/softsensor-uq-mlops/actions/workflows/ci.yml/badge.svg)
+![ci](https://github.com/yashbansod123-chemeng/softsensor-uq-mlops/actions/workflows/ci.yml/badge.svg)
 
 An uncertainty-aware soft sensor built on **mean-variance estimation (MVEM)**: the network predicts both
 a value and its variance, so every prediction carries a 95% interval. The project is packaged as a
